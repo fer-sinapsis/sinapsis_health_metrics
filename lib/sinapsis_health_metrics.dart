@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 
 class SinapsisHealthMetrics {
   static const MethodChannel _channel =
-      MethodChannel('health_metrics_observers');
+      MethodChannel('co.sinapsis.sinapsis_health_metrics');
 
   static Future<bool> createStepCountObserver({
     required String apiUrl,
@@ -24,7 +24,8 @@ class SinapsisHealthMetrics {
   }
 
   static Future<int?> getLastDateSaved({required String metricType}) async {
-    final result = await _channel.invokeMethod('getLastDateSaved', {"metricType": metricType});
+    final result = await _channel
+        .invokeMethod('getLastDateSaved', {"metricType": metricType});
     return result;
   }
 
@@ -33,8 +34,12 @@ class SinapsisHealthMetrics {
     return observerStatus;
   }
 
-  static Future<void> updateLastDateSaved({ required int newDateInMilliseconds, required String metricType}) async {
-    await _channel.invokeMethod('updateLastDateSaved', {"newDateInMilliseconds": newDateInMilliseconds, "metricType": metricType});
+  static Future<void> updateLastDateSaved(
+      {required int newDateInMilliseconds, required String metricType}) async {
+    await _channel.invokeMethod('updateLastDateSaved', {
+      "newDateInMilliseconds": newDateInMilliseconds,
+      "metricType": metricType
+    });
   }
 
   static Future<bool> isObserverSyncing() async {

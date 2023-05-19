@@ -1,4 +1,4 @@
-group 'com.wecare.health_metrics_observers'
+group 'co.sinapsis.sinapsis_health_metrics'
 version '0.1.4'
 
 buildscript {
