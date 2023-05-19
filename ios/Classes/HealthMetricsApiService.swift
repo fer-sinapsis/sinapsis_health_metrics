@@ -1,6 +1,6 @@
 //
 //  HealthMetricsApiService.swift
-//  co.sinapsis.sinapsis_health_metrics
+//  health_metrics_observers
 
 import Foundation
 

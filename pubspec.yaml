@@ -1,4 +1,4 @@
-name: sinapsis_health_metrics
+name: health_metrics_observers
 description: A new Flutter package project.
 version: 0.0.1
 homepage:
@@ -24,7 +24,7 @@ flutter:
   plugin:
     platforms:
       android:
-        package: co.sinapsis.sinapsis_health_metrics
+        package: co.sinapsis.health_metrics_observers
         pluginClass: HealthMetricsObserverPlugin
       ios:
         pluginClass: HealthMetricsObserverPlugin

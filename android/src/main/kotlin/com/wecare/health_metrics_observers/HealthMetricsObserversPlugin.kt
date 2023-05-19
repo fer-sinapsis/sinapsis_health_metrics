@@ -1,4 +1,4 @@
-package co.sinapsis.sinapsis_health_metrics
+package com.wecare.health_metrics_observers
 
 import android.content.Context
 import androidx.annotation.NonNull
@@ -24,7 +24,7 @@ class HealthMetricsObserversPlugin: FlutterPlugin, MethodCallHandler {
   private lateinit var context: Context
 
   override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
-    channel = MethodChannel(flutterPluginBinding.binaryMessenger, "co.sinapsis.sinapsis_health_metrics")
+    channel = MethodChannel(flutterPluginBinding.binaryMessenger, "health_metrics_observers")
     context = flutterPluginBinding.applicationContext
     ObserverStatus.updateObserverSyncing(context, false);
     channel.setMethodCallHandler(this)

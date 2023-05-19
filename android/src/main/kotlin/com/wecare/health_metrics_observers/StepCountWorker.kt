@@ -1,4 +1,4 @@
-package co.sinapsis.sinapsis_health_metrics
+package com.wecare.health_metrics_observers
 
 import android.content.Context
 import androidx.work.Worker
@@ -7,8 +7,8 @@ import com.google.android.gms.fitness.Fitness
 import com.google.android.gms.fitness.data.DataPoint
 import com.google.android.gms.fitness.data.Field
 import com.google.android.gms.fitness.request.DataReadRequest
-import co.sinapsis.sinapsis_health_metrics.AppConstants
-import co.sinapsis.sinapsis_health_metrics.ObserverStatus
+import com.wecare.health_metrics_observers.AppConstants
+import com.wecare.health_metrics_observers.ObserverStatus
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit

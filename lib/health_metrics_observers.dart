@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/services.dart';
 
-class SinapsisHealthMetrics {
+class HealthMetricsObservers {
   static const MethodChannel _channel =
-      MethodChannel('co.sinapsis.sinapsis_health_metrics');
+      MethodChannel('co.sinapsis.health_metrics_observers');
 
   static Future<bool> createStepCountObserver({
     required String apiUrl,

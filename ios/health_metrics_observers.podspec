@@ -1,9 +1,9 @@
 #
 # To learn more about a Podspec see http://guides.cocoapods.org/syntax/podspec.html.
-# Run `pod lib lint co.sinapsis.sinapsis_health_metrics.podspec` to validate before publishing.
+# Run `pod lib lint health_metrics_observers.podspec` to validate before publishing.
 #
 Pod::Spec.new do |s|
-  s.name             = 'co.sinapsis.sinapsis_health_metrics'
+  s.name             = 'health_metrics_observers'
   s.version          = '0.1.4'
   s.summary          = 'creates background obverservers on health data'
   s.description      = <<-DESC

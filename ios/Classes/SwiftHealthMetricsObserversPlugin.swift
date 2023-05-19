@@ -9,7 +9,7 @@ public class SwiftHealthMetricsObserversPlugin: NSObject, FlutterPlugin {
     private let isObserverSyncing = "isObserverSyncing"
     
     public static func register(with registrar: FlutterPluginRegistrar) {
-        let channel = FlutterMethodChannel(name: "co.sinapsis.sinapsis_health_metrics", binaryMessenger: registrar.messenger())
+        let channel = FlutterMethodChannel(name: "health_metrics_observers", binaryMessenger: registrar.messenger())
         let instance = SwiftHealthMetricsObserversPlugin()
         registrar.addMethodCallDelegate(instance, channel: channel)
         registrar.addApplicationDelegate(instance)
