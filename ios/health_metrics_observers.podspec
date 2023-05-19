@@ -5,7 +5,7 @@
 Pod::Spec.new do |s|
   s.name             = 'health_metrics_observers'
   s.version          = '0.1.4'
-  s.summary          = 'creates background obverservers on health data'
+  s.summary          = 'creates background observers on health data'
   s.description      = <<-DESC
 A new flutter plugin project.
                        DESC

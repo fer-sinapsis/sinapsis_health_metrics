@@ -2,7 +2,7 @@ group 'co.sinapsis.health_metrics_observers'
 version '0.1.4'
 
 buildscript {
-    ext.kotlin_version = '1.5.+'
+    ext.kotlin_version = '1.7.20'
     repositories {
         google()
         mavenCentral()
