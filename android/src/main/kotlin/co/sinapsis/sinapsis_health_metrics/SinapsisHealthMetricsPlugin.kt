@@ -1,4 +1,4 @@
-package co.sinapsis.health_metrics_observers
+package co.sinapsis.sinapsis_health_metrics
 
 import android.content.Context
 import androidx.annotation.NonNull

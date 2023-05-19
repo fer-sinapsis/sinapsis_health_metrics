@@ -1,9 +1,9 @@
-package co.sinapsis.health_metrics_observers
+package co.sinapsis.sinapsis_health_metrics
 
 import com.google.gson.FieldNamingPolicy
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
-import co.sinapsis.health_metrics_observers.AppConstants
+import co.sinapsis.sinapsis_health_metrics.AppConstants
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
