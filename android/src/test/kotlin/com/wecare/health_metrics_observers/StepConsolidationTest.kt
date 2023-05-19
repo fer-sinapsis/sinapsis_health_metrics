@@ -1,4 +1,4 @@
-package com.wecare.health_metrics_observers
+package co.sinapsis.health_metrics_observers
 
 import com.google.android.gms.fitness.data.DataPoint
 import com.google.android.gms.fitness.data.DataSource
