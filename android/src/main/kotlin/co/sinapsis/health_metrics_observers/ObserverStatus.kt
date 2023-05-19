@@ -7,7 +7,7 @@ import java.util.*
 class AppConstants {
     companion object {
         const val defaultDateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ"
-        const val sharedPrefId = "wecare.default.preferences"
+        const val sharedPrefId = "sinapsis.default.preferences"
     }
 }
 
