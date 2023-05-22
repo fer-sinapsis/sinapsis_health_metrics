@@ -25,9 +25,9 @@ flutter:
     platforms:
       android:
         package: co.sinapsis.health_metrics_observers
-        pluginClass: HealthMetricsObserverPlugin
+        pluginClass: HealthMetricsObserversPlugin
       ios:
-        pluginClass: HealthMetricsObserverPlugin
+        pluginClass: HealthMetricsObserversPlugin
 
   # To add assets to your package, add an assets section, like this:
   # assets:
