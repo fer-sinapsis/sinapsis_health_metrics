@@ -9,8 +9,8 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 
-/** HealthMetricsObserverPlugin */
-class HealthMetricsObserverPlugin: FlutterPlugin, MethodCallHandler {
+/** HealthMetricsObserversPlugin */
+class HealthMetricsObserversPlugin: FlutterPlugin, MethodCallHandler {
   /// The MethodChannel that will the communication between Flutter and native Android
   ///
   /// This local reference serves to register the plugin with the Flutter Engine and unregister it
