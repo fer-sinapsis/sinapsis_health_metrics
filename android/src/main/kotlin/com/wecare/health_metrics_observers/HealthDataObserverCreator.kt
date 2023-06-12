@@ -1,4 +1,4 @@
-package co.sinapsis.health_metrics_observers
+package cam.sinapsis.health_metrics_observers
 
 import android.content.Context
 import androidx.work.Data

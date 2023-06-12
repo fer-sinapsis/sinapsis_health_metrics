@@ -1,3 +1,3 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-  package="co.sinapsis.health_metrics_observers">
+  package="cam.sinapsis.health_metrics_observers">
 </manifest>

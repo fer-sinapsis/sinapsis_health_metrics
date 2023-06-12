@@ -1,4 +1,4 @@
-package co.sinapsis.health_metrics_observers
+package cam.sinapsis.health_metrics_observers
 
 import android.content.Context
 import androidx.annotation.NonNull
@@ -8,6 +8,7 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
+import java.util.*
 
 /** HealthMetricsObserversPlugin */
 class HealthMetricsObserversPlugin: FlutterPlugin, MethodCallHandler {
@@ -21,6 +22,7 @@ class HealthMetricsObserversPlugin: FlutterPlugin, MethodCallHandler {
   private val updateLastSavedDateKey = "updateLastDateSaved"
   private val getObserverStatus = "getObserverStatus"
   private val isObserverSyncing = "isObserverSyncing"
+  private val getStepsCountByIntervals = "getStepsCountByIntervals"
   private lateinit var context: Context
 
   override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
@@ -57,6 +59,27 @@ class HealthMetricsObserversPlugin: FlutterPlugin, MethodCallHandler {
       result.success(ObserverStatus.getStatusMap(context))
     } else if (call.method == isObserverSyncing) {
       result.success(ObserverStatus.isObserverSyncing(context))
+    } else if (call.method == getStepsCountByIntervals) {
+      val startDateMillisecs = call.argument<Long>("startDateMillisecs")
+      val endDateMillisecs = call.argument<Long>("endDateMillisecs")
+      val intervalString = call.argument<String>("interval") ?: ""
+      val span = TimeSpan.fromString(intervalString)
+
+      if(startDateMillisecs != null && endDateMillisecs != null && span != null) {
+        val startDate = Date(startDateMillisecs)
+        val endDate = Date(endDateMillisecs)
+        HealthMetricsRetriever.getStepsCountByIntervals(startDate, endDate, span, context, success = { results ->
+          result.success(results.map { it.toMap() } )
+        }, failure = { _ ->
+          result.error(
+            "error_retrieving_data",
+            "error retrieving step counts by intervals",
+            null
+          )
+        })
+      }else{
+        result.error("param_missing", "param missing", null)
+      }
     } else {
       result.notImplemented()
     }

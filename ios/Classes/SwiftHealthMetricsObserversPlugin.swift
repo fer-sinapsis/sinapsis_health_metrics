@@ -7,6 +7,7 @@ public class SwiftHealthMetricsObserversPlugin: NSObject, FlutterPlugin {
     private let updateLastSavedDateKey = "updateLastDateSaved"
     private let getObserverStatus = "getObserverStatus"
     private let isObserverSyncing = "isObserverSyncing"
+    private let getStepsCountByIntervals = "getStepsCountByIntervals"
     
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(name: "health_metrics_observers", binaryMessenger: registrar.messenger())
@@ -84,6 +85,40 @@ public class SwiftHealthMetricsObserversPlugin: NSObject, FlutterPlugin {
             result(ObserverStatus.getObserverStatus())
         } else if call.method == isObserverSyncing {
             result(ObserverStatus.isObserverSyncing())
+        } else if call.method == getStepsCountByIntervals {
+            
+            guard let args = call.arguments as? [String : Any],
+            let startDateMillisecs = args["startDateMillisecs"] as? Int,
+            let endDateMillisecs = args["endDateMillisecs"] as? Int,
+            let interval = args["interval"] as? String,
+            let timespan = TimeSpan(rawValue: interval)
+            else {
+                let error = HKRetrievingDataErrors.missingCorrectParameters
+                let flutterError = FlutterError(code: error.code, message: error.message, details: nil)
+                result(flutterError)
+                return
+            }
+            
+            let startDate = Date(timeIntervalSince1970: TimeInterval(startDateMillisecs/1000))
+            let endDate = Date(timeIntervalSince1970: TimeInterval(endDateMillisecs/1000))
+            
+            HealthMetricsSender().getStepsCountByIntervals(
+                startDate: startDate,
+                endDate: endDate,
+                timeSpan: timespan
+            ) { stepsCountResult in
+                    switch stepsCountResult {
+                    case .success(let samples):
+                        let samplesAsDict = samples.map({ sample in
+                            sample.toDictionary()
+                        })
+                        result(samplesAsDict)
+                    case .failure(let err):
+                        let error = HKRetrievingDataErrors.noDataError
+                        let flutterError = FlutterError(code: error.code, message: err.localizedDescription, details: nil)
+                        result(flutterError)
+                    }
+                }
         }
   }
 }

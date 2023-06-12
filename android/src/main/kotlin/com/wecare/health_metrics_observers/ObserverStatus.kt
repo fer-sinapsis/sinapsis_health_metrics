@@ -1,4 +1,4 @@
-package co.sinapsis.health_metrics_observers
+package cam.sinapsis.health_metrics_observers
 
 import android.content.Context
 import java.text.SimpleDateFormat
@@ -7,7 +7,7 @@ import java.util.*
 class AppConstants {
     companion object {
         const val defaultDateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ"
-        const val sharedPrefId = "sinapsis.default.preferences"
+        const val sharedPrefId = "wecare.default.preferences"
     }
 }
 

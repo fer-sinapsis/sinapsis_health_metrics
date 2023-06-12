@@ -1,7 +1,9 @@
 //
 //  HealthMetricsSender.swift
 //  Runner
-
+//
+//  Created by Sudarshan Chakra on 5/01/22.
+//
 
 import Foundation
 import HealthKit
@@ -15,12 +17,13 @@ class HealthMetricsSender {
         let defaults = UserDefaults.standard
         
         self.getLastTimeStepsSaved { lastTimeStepsSaved in
+            
             guard let startDate = lastTimeStepsSaved ?? Calendar.current.date(byAdding: Calendar.Component.day, value: -1, to: endDate) else {
                 completion(false)
                 return
             }
-            
-            self.getStepsArray(startDate: startDate, endDate: endDate, completion: { result in
+
+            self.getStepsCountByIntervals(startDate: startDate, endDate: endDate, timeSpan: .hour, completion: { result in
                 switch result {
                 case .success(let results):
                     // results to dictionaries
@@ -64,6 +67,62 @@ class HealthMetricsSender {
                 }
             })
         }
+    }
+    
+    func getStepsCountByIntervals(startDate: Date, endDate: Date, timeSpan: TimeSpan, completion: @escaping (Result<[HKQuantitySample], Error>) -> Void){
+       
+        guard let stepsQuantityType = HKQuantityType.quantityType(forIdentifier: .stepCount) else {
+            completion(.failure(HKRetrievingDataErrors.quantityTypeNotCreatedError))
+            return
+        }
+        
+        let predicate = HKQuery.predicateForSamples(
+            withStart: startDate,
+            end: endDate,
+            options: [.strictStartDate, .strictEndDate]
+        )
+        
+        let query = HKStatisticsCollectionQuery(
+            quantityType: stepsQuantityType,
+            quantitySamplePredicate: predicate,
+            options: .cumulativeSum,
+            anchorDate: startDate,
+            intervalComponents: timeSpan.dateComponentValue()
+        )
+        
+        query.initialResultsHandler = { query, statsCollectionOpt, error in
+            if let error = error as? HKError {
+                completion(Result.failure(error))
+                return
+            }
+            guard let statsCollection = statsCollectionOpt else {
+                completion(Result.failure(HKRetrievingDataErrors.noDataError))
+                return
+            }
+            
+            var results: [HKQuantitySample] = []
+            //iterating the stat results on the selected intervals
+            var statistics = statsCollection.statistics()
+            statistics.forEach { stat in
+                if let sumQuantity = stat.sumQuantity() {
+                    let isLast = statistics.last == stat
+                    let endsInFuture = stat.endDate > endDate
+                    let sampleEnddate = isLast && endsInFuture ? endDate : stat.endDate
+                    let sample = HKQuantitySample(
+                        type: stepsQuantityType,
+                        quantity: sumQuantity,
+                        start: stat.startDate,
+                        end: sampleEnddate
+                    )
+                    results.append(sample)
+                }
+            }
+            
+            completion(Result.success(results))
+        }
+        
+        let healthKitStore: HKHealthStore = HKHealthStore()
+        healthKitStore.execute(query)
     }
     
     func getStepsArray(startDate: Date, endDate: Date, completion: @escaping (Result<[HKQuantitySample], Error>) -> Void){
@@ -215,6 +274,21 @@ extension HKQuantitySample {
         let earlierStartsInsideOlder = earlierStartAfterOlderStart && earlierStartBeforeOlderEnd
         
         return earlierStartsInsideOlder ? (older, earlier) : nil
+    }
+}
+
+enum TimeSpan: String, CaseIterable {
+    case hour = "hour", day = "day", week = "week"
+     
+    func dateComponentValue() -> DateComponents {
+        switch self {
+        case .hour:
+            return DateComponents(hour: 1)
+        case .day:
+            return DateComponents(day: 1)
+        case .week:
+            return DateComponents(day: 7)
+        }
     }
 }
 

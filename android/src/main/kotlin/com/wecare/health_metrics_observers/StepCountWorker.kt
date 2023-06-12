@@ -1,14 +1,13 @@
-package co.sinapsis.health_metrics_observers
+package cam.sinapsis.health_metrics_observers
 
 import android.content.Context
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.google.android.gms.fitness.Fitness
 import com.google.android.gms.fitness.data.DataPoint
+import com.google.android.gms.fitness.data.DataSource
 import com.google.android.gms.fitness.data.Field
 import com.google.android.gms.fitness.request.DataReadRequest
-import co.sinapsis.health_metrics_observers.AppConstants
-import co.sinapsis.health_metrics_observers.ObserverStatus
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -53,9 +52,10 @@ class StepCountUpdateWorker(appContext: Context, workerParams: WorkerParameters)
                 val endDate = Date()
                 var startDate = lastTimeSaved ?: Date(endDate.time - (24 * 60 * 60 * 1000))
 
-                getStepsArray(
+                HealthMetricsRetriever.getStepsCountByIntervals(
                     startDate = startDate,
                     endDate = endDate,
+                    timeSpan = TimeSpan.HOUR,
                     context = this.applicationContext,
                     success = { stepDatapoints ->
                         val stepRecords = stepDatapoints.mapIndexed { _, dataPoint ->
@@ -64,7 +64,7 @@ class StepCountUpdateWorker(appContext: Context, workerParams: WorkerParameters)
 
                         if (stepRecords.isEmpty()) {
                             completion(false)
-                            return@getStepsArray
+                            return@getStepsCountByIntervals
                         }
 
                         HealthMetricsApiService.sendSteps(
@@ -111,7 +111,6 @@ class StepCountUpdateWorker(appContext: Context, workerParams: WorkerParameters)
             completion(false)
         }
     }
-
     private fun getStepsArray(
         startDate: Date,
         endDate: Date,
@@ -168,6 +167,69 @@ class StepCountUpdateWorker(appContext: Context, workerParams: WorkerParameters)
                     ObserverStatus.updateLastDateSaved(this.applicationContext, lastTimeSaved.time, "STEP")
                 }
                 completion(lastTimeSaved)
+            }
+        }
+    }
+}
+
+class HealthMetricsRetriever {
+    companion object {
+        public fun getStepsCountByIntervals(
+            startDate: Date,
+            endDate: Date,
+            timeSpan: TimeSpan,
+            context: Context,
+            success: (List<DataPoint>) -> Unit,
+            failure: (Exception) -> Unit,
+        ) {
+            val datasource = DataSource.Builder()
+                .setAppPackageName("com.google.android.gms")
+                .setDataType(HealthDataObserverCreator.CONFIG_DATATYPE)
+                .setType(DataSource.TYPE_DERIVED)
+                .setStreamName("estimated_steps")
+                .build()
+
+            val (numberOfTimes, timeUnit) = timeSpan.components()
+            val request = DataReadRequest.Builder()
+                .aggregate(datasource)
+                .bucketByTime(numberOfTimes, timeUnit)
+                .setTimeRange(startDate.time, endDate.time, TimeUnit.MILLISECONDS)
+                .build()
+
+            val googleSignInAccount = HealthDataObserverCreator
+                .getGoogleSignInAccount(context)
+
+            Fitness.getHistoryClient(context, googleSignInAccount)
+                .readData(request)
+                .addOnSuccessListener { response ->
+                    val dataPoints =
+                        response.buckets.flatMap { it.dataSets }.flatMap { it.dataPoints }
+                    success(dataPoints)
+                }
+                .addOnFailureListener { e ->
+                    failure(e)
+                }
+        }
+    }
+}
+
+enum class TimeSpan {
+    HOUR, DAY, WEEK;
+    fun components(): Pair<Int, TimeUnit> {
+        return when (this) {
+            HOUR -> Pair(1, TimeUnit.HOURS)
+            DAY -> Pair(1, TimeUnit.DAYS)
+            WEEK -> Pair(7, TimeUnit.DAYS)
+        }
+    }
+
+    companion object {
+        fun fromString(value: String): TimeSpan? {
+            return when (value) {
+                "hour" -> HOUR
+                "day" -> DAY
+                "week" -> WEEK
+                else -> null
             }
         }
     }

@@ -4,14 +4,14 @@
 #
 Pod::Spec.new do |s|
   s.name             = 'health_metrics_observers'
-  s.version          = '0.1.4'
-  s.summary          = 'creates background observers on health data'
+  s.version          = '0.1.5'
+  s.summary          = 'creates background obverservers on health data'
   s.description      = <<-DESC
 A new flutter plugin project.
                        DESC
-  s.homepage         = 'http://www.sinapsis.co'
+  s.homepage         = 'http://www.trywecare.com'
   s.license          = { :file => '../LICENSE' }
-  s.author           = { 'Sinapsis' => 'fernando.haring@sinapsis.co' }
+  s.author           = { 'Wecare' => 'aryuna@andiago.com' }
   s.source           = { :path => '.' }
   s.source_files = 'Classes/**/*'
   s.dependency 'Flutter'
