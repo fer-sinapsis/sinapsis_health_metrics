@@ -1,4 +1,4 @@
-group 'cam.sinapsis.health_metrics_observers'
+group 'com.sinapsis.health_metrics_observers'
 version '0.1.5'
 
 buildscript {

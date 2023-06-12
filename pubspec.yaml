@@ -29,7 +29,7 @@ flutter:
   plugin:
     platforms:
       android:
-        package: cam.sinapsis.health_metrics_observers
+        package: com.sinapsis.health_metrics_observers
         pluginClass: HealthMetricsObserversPlugin
       ios:
         pluginClass: HealthMetricsObserversPlugin
