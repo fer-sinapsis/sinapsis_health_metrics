@@ -18,6 +18,24 @@ final class RunnerTests: XCTestCase {
     override func tearDownWithError() throws {
         // Put teardown code here. This method is called after the invocation of each test method in the class.
     }
+    
+    func testStatsQueryModeOnlyHead(){
+        let startDate = Calendar.current.date(byAdding: .minute, value: 30, to: Calendar.current.startOfDay(for: Date()))!
+        let mode = HealthMetricsSender().getStatsQueryModeNeededForRange(startDate: startDate, endDate: startDate.addingTimeInterval(TimeInterval(1800))) // 30 mins
+        XCTAssert(mode == .onlyHead)
+    }
+    
+    func testStatsQueryModeOnlyCollection(){
+        let startDate = Calendar.current.date(byAdding: .minute, value: 120, to: Calendar.current.startOfDay(for: Date()))!
+        let mode = HealthMetricsSender().getStatsQueryModeNeededForRange(startDate: startDate, endDate: startDate.addHours(3))
+        XCTAssert(mode == .onlyCollection)
+    }
+    
+    func testStatsQueryModeBoth(){
+        let startDate = Calendar.current.date(byAdding: .minute, value: 37, to: Calendar.current.startOfDay(for: Date()))!
+        let mode = HealthMetricsSender().getStatsQueryModeNeededForRange(startDate: startDate, endDate: startDate.addHours(4))
+        XCTAssert(mode == .headAndCollection)
+    }
 
     func testSameSourcesNoConsolidation() throws {
         let now = Date()

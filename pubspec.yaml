@@ -1,6 +1,6 @@
 name: health_metrics_observers
 description: health metrics observers and utilities
-version: 0.1.5
+version: 0.1.6
 homepage:
 
 environment:
@@ -12,7 +12,6 @@ dependencies:
     sdk: flutter
 
 dev_dependencies:
-  change_app_package_name: ^1.1.0
   flutter_test:
     sdk: flutter
   flutter_lints: ^1.0.0

@@ -1,5 +1,5 @@
 group 'com.sinapsis.health_metrics_observers'
-version '0.1.5'
+version '0.1.6'
 
 buildscript {
     ext.kotlin_version = '1.5.+'

@@ -204,7 +204,8 @@ class HealthMetricsRetriever {
                 .addOnSuccessListener { response ->
                     val dataPoints =
                         response.buckets.flatMap { it.dataSets }.flatMap { it.dataPoints }
-                    success(dataPoints)
+                    val filteredDataPoints = dataPoints.filter { it.extractValue() > 0 }
+                    success(filteredDataPoints)
                 }
                 .addOnFailureListener { e ->
                     failure(e)

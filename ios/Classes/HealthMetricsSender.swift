@@ -22,7 +22,7 @@ class HealthMetricsSender {
                 completion(false)
                 return
             }
-
+            
             self.getStepsCountByIntervals(startDate: startDate, endDate: endDate, timeSpan: .hour, completion: { result in
                 switch result {
                 case .success(let results):
@@ -69,8 +69,90 @@ class HealthMetricsSender {
         }
     }
     
-    func getStepsCountByIntervals(startDate: Date, endDate: Date, timeSpan: TimeSpan, completion: @escaping (Result<[HKQuantitySample], Error>) -> Void){
-       
+    func getStepsCountByIntervals(
+        startDate: Date,
+        endDate: Date,
+        timeSpan: TimeSpan,
+        completion: @escaping (Result<[HKQuantitySample], Error>) -> Void
+    ){
+        
+        let statsQueryMode = getStatsQueryModeNeededForRange(
+            startDate: startDate, endDate: endDate
+        )
+        
+        switch statsQueryMode {
+        case .onlyHead:
+            // range under 60 min so we only need one stat query
+            getStepsCountOn(startDate: startDate, endDate: endDate) { result in
+                switch result {
+                case .success(let sampleOrNil):
+                    let samples = sampleOrNil != nil ? [sampleOrNil!] : []
+                    completion(.success(samples))
+                case .failure(let error):
+                    completion(.failure(error))
+                }
+            }
+        case .onlyCollection:
+            //starting at a sharp hour
+            stepStatsCollectionQuery(startDate: startDate, endDate: endDate, timeSpan: timeSpan) { result in
+                switch result {
+                case .success(let samples):
+                    completion(.success(samples))
+                case .failure(let error):
+                    completion(.failure(error))
+                }
+            }
+        case .headAndCollection:
+            guard let closestSharpHour = Calendar.current.date(
+                bySettingHour: Calendar.current.component(.hour, from: startDate) + 1,
+                minute: 0,
+                second: 0,
+                of: startDate
+            ) else {
+                completion(.failure(HKRetrievingDataErrors.quantityTypeNotCreatedError))
+                return
+            }
+            
+            getStepsCountOn(startDate: startDate, endDate: closestSharpHour) { result in
+                switch result {
+                case .success(let sampleOrNil):
+                    
+                    self.stepStatsCollectionQuery(startDate: closestSharpHour, endDate: endDate, timeSpan: timeSpan) { result in
+                        switch result {
+                        case .success(let samples):
+                            var updatedSamples: [HKQuantitySample] = []
+                            updatedSamples.append(contentsOf: samples)
+                            if let sample = sampleOrNil {
+                                updatedSamples.append(sample)
+                            }
+                            completion(.success(updatedSamples))
+                        case .failure(let error):
+                            completion(.failure(error))
+                        }
+                    }
+                case .failure(let error):
+                    completion(.failure(error))
+                }
+            }
+        }
+    }
+    
+    func getStatsQueryModeNeededForRange(startDate: Date, endDate: Date) -> StatsQueryMode {
+        let diffInMins = abs(startDate.timeIntervalSince(endDate).magnitude)/60
+        if diffInMins > 60 {
+            let startMins = Calendar.current.component(.minute, from: startDate)
+            return startMins > 0 ? .headAndCollection : .onlyCollection
+        } else {
+            return .onlyHead
+        }
+    }
+    
+    func stepStatsCollectionQuery(
+        startDate: Date,
+        endDate: Date,
+        timeSpan: TimeSpan,
+        completion: @escaping (Result<[HKQuantitySample], Error>) -> Void
+    ){
         guard let stepsQuantityType = HKQuantityType.quantityType(forIdentifier: .stepCount) else {
             completion(.failure(HKRetrievingDataErrors.quantityTypeNotCreatedError))
             return
@@ -92,7 +174,8 @@ class HealthMetricsSender {
         
         query.initialResultsHandler = { query, statsCollectionOpt, error in
             if let error = error as? HKError {
-                completion(Result.failure(error))
+                let isNoDataError = error.code.rawValue == 11
+                completion(isNoDataError ? .success([]) : .failure(error))
                 return
             }
             guard let statsCollection = statsCollectionOpt else {
@@ -102,7 +185,7 @@ class HealthMetricsSender {
             
             var results: [HKQuantitySample] = []
             //iterating the stat results on the selected intervals
-            var statistics = statsCollection.statistics()
+            let statistics = statsCollection.statistics()
             statistics.forEach { stat in
                 if let sumQuantity = stat.sumQuantity() {
                     let isLast = statistics.last == stat
@@ -119,6 +202,52 @@ class HealthMetricsSender {
             }
             
             completion(Result.success(results))
+        }
+        
+        let healthKitStore: HKHealthStore = HKHealthStore()
+        healthKitStore.execute(query)
+    }
+    
+    func getStepsCountOn(
+        startDate: Date,
+        endDate: Date,
+        completion: @escaping (Result<HKQuantitySample?, Error>) -> Void
+    ) {
+        guard let stepsQuantityType = HKQuantityType.quantityType(forIdentifier: .stepCount) else {
+            completion(
+                Result.failure(HKRetrievingDataErrors.quantityTypeNotCreatedError)
+            )
+            return
+        }
+            
+        let predicate = HKQuery.predicateForSamples(
+            withStart: startDate,
+            end: endDate,
+            options: [.strictStartDate, .strictEndDate]
+        )
+        
+        let query = HKStatisticsQuery(
+            quantityType: stepsQuantityType,
+            quantitySamplePredicate: predicate,
+            options: .cumulativeSum
+        ) { (query, statisticsOrNil, errorOrNil) in
+            if let error = errorOrNil as? HKError {
+                let isNoDataError = error.code.rawValue == 11
+                completion(isNoDataError ? .success(nil) : .failure(error))
+                return
+            }
+            guard let stats = statisticsOrNil, let sumQuantity = stats.sumQuantity() else {
+                completion(.success(nil))
+                return
+            }
+            
+            let sample = HKQuantitySample(
+                type: stepsQuantityType,
+                quantity: sumQuantity,
+                start: stats.startDate,
+                end: stats.endDate
+            )
+            completion(Result.success(sample))
         }
         
         let healthKitStore: HKHealthStore = HKHealthStore()
@@ -290,6 +419,10 @@ enum TimeSpan: String, CaseIterable {
             return DateComponents(day: 7)
         }
     }
+}
+
+enum StatsQueryMode {
+    case onlyHead, onlyCollection, headAndCollection
 }
 
 
