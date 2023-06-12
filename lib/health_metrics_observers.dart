@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 
 class HealthMetricsObservers {
   static const MethodChannel _channel =
-      MethodChannel('co.sinapsis.health_metrics_observers');
+      MethodChannel('health_metrics_observers');
 
   static Future<bool> createStepCountObserver({
     required String apiUrl,
@@ -24,8 +24,7 @@ class HealthMetricsObservers {
   }
 
   static Future<int?> getLastDateSaved({required String metricType}) async {
-    final result = await _channel
-        .invokeMethod('getLastDateSaved', {"metricType": metricType});
+    final result = await _channel.invokeMethod('getLastDateSaved', {"metricType": metricType});
     return result;
   }
 
@@ -34,16 +33,33 @@ class HealthMetricsObservers {
     return observerStatus;
   }
 
-  static Future<void> updateLastDateSaved(
-      {required int newDateInMilliseconds, required String metricType}) async {
-    await _channel.invokeMethod('updateLastDateSaved', {
-      "newDateInMilliseconds": newDateInMilliseconds,
-      "metricType": metricType
-    });
+  static Future<void> updateLastDateSaved({ required int newDateInMilliseconds, required String metricType}) async {
+    await _channel.invokeMethod('updateLastDateSaved', {"newDateInMilliseconds": newDateInMilliseconds, "metricType": metricType});
   }
 
   static Future<bool> isObserverSyncing() async {
     final syncing = (await _channel.invokeMethod('isObserverSyncing'));
     return syncing;
   }
+
+  static Future<List<Map<String, dynamic>>> getStepsCountByIntervals(DateTime startDate, DateTime endDate, TimeInterval interval) async {
+    final args = {
+      'startDateMillisecs': startDate.millisecondsSinceEpoch,
+      'endDateMillisecs': endDate.millisecondsSinceEpoch,
+      'interval': interval.name
+    };
+    final result = await _channel.invokeListMethod<Map?>('getStepsCountByIntervals', args);
+    if(result != null) {
+      final nonNull = result.where((e) => e != null).toList();
+      return nonNull.map((e) => Map<String, dynamic>.from(e!)).toList();
+    } else {
+      return [];
+    }
+  }
+}
+
+enum TimeInterval {
+  hour,
+  day,
+  week
 }
