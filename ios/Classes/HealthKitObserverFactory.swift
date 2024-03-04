@@ -8,53 +8,49 @@
 import Foundation
 import HealthKit
 
-class HealthKitObserverFactory {
+class ObserverFactory {
     
-    static let hkPermissionsAlreadyGiven = "HKPermissionsGiven"
-    
-    static func createStepsCountBackgroundObserver(startingActivity: Bool, completion: @escaping (Bool) -> Void){
-        
-        let healthKitStore: HKHealthStore = HKHealthStore()
-        guard let stepCountType = HKObjectType.quantityType(forIdentifier: .stepCount) else {
-            completion(false)
+    static func createBackgroundObserver(
+        metricType: MetricType,
+        completion: ((Bool) -> Void)? = nil
+    ){
+        guard let sampleType = metricType.getSampleType() else {
+            completion?(false)
             return
         }
         
-        let query = HKObserverQuery(sampleType: stepCountType, predicate: nil) { (query, completionHandler, errorOrNil) in
+        var observer: BackgroundMetricObserver = (metricType == .workout) ? WorkoutObserver() : StepObserver()
+        
+        let query = HKObserverQuery(sampleType: sampleType, predicate: nil) { (query, completionHandler, errorOrNil) in
             
             if let error = errorOrNil {
                 // TODO: confirm completion handler or inform that there was an error observing
                 print(error)
                 return
             }
-            
-            if ObserverStatus.isObserverSyncing() {
-                completionHandler()
-                return
-            }
-            
-            ObserverStatus.updateObserverSyncing(newValue: true)
-            
-            let metricsSender = HealthMetricsSender()
-            metricsSender.attemptToSendSteps(completion: { updated in
-                print("data sent: \(updated)")
-                ObserverStatus.updateObserverSyncing(newValue: false)
+
+            observer.newDataDetected(completion: {
                 completionHandler()
             })
         }
         
-        healthKitStore.execute(query) // execute query after background delivery enabing ?
-        healthKitStore.enableBackgroundDelivery(for: stepCountType, frequency: HKUpdateFrequency.hourly) { succeeded, error in
+        observer.observerQuery = query
+        
+        let healthKitStore: HKHealthStore = HKHealthStore()
+        healthKitStore.execute(query)
+        let frequency: HKUpdateFrequency = (metricType == .workout) ? .immediate : .hourly
+        healthKitStore.enableBackgroundDelivery(for: sampleType, frequency: frequency) { succeeded, error in
             if succeeded {
-                print("Enabled background delivery of step changes")
+                print("Enabled background delivery of \(metricType.rawValue) changes")
             } else {
-                if let theError = error{
+                if let theError = error {
                     print("Failed to enable background delivery of step changes. ")
                     print("Error = \(theError)")
                 }
             }
-            ObserverStatus.updateObserverCreated(succeeded)
-            completion(succeeded)
+            ObserverStatus.updateObserverCreated(succeeded, metricType: metricType)
+            completion?(succeeded)
         }
     }
+    
 }

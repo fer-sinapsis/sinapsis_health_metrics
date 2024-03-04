@@ -22,6 +22,11 @@ class ObserverStatus {
     static let lastSleepDateSavedKey = "lastSleepDateSaved"
     static let lastSleepValueSentKey = "lastSleepValueSent"
     
+    static let apiUrlKey = "apiUrl"
+    static let migratedToShrcrApiKey = "migratedToSharecareApi"
+    
+    static let lastCheckWorkoutsKey = "lastCheckWorkouts"
+    
     // last saved date - shared across sources
     static func getLastDateSaved(metricType: String) -> Int? {
         let lastDateSavedKey = Self.getLastDateSavedKeyByMetricType(metricType: metricType)
@@ -30,6 +35,12 @@ class ObserverStatus {
         } else {
             return nil
         }
+    }
+    
+    static func getLastReferenceDate(metricType: MetricType) -> Date? {
+        //reference date last check or saved
+        let lastDateSavedKey = Self.getLastDateSavedKeyByMetricType(metricType: metricType.rawValue)
+        return defaults.object(forKey: lastDateSavedKey) as? Date
     }
     
     static func updateLastDateSaved(newDateInMilliseconds: Int, metricType: String){
@@ -45,6 +56,8 @@ class ObserverStatus {
             return Self.nextStartDateKey
         case "SLEEP":
             return Self.lastSleepDateSavedKey
+        case "WORKOUT":
+            return Self.lastCheckWorkoutsKey
         default:
             return ""
         }
@@ -75,12 +88,30 @@ class ObserverStatus {
         }
     }
 
-    static func updateObserverCreated(_ created: Bool){
-        defaults.set(created, forKey: Self.observerCreatedKey)
+    static func updateObserverCreated(_ created: Bool, metricType: MetricType) {
+        let createdKey = metricType.getObserverCreatedKeyStr()
+        defaults.set(created, forKey: createdKey)
     }
     
-    static func hasObserverCreated() -> Bool {
-        return defaults.bool(forKey: Self.observerCreatedKey)
+    static func hasObserverCreated(metricType: MetricType) -> Bool {
+        let createdKey = metricType.getObserverCreatedKeyStr()
+        return defaults.bool(forKey: createdKey)
+    }
+    
+    static func updateApiUrl(_ newApiUrl: String){
+        defaults.set(newApiUrl, forKey: Self.apiUrlKey)
+    }
+    
+    static func getApiUrl() -> String? {
+        return defaults.string(forKey: Self.apiUrlKey)
+    }
+    
+    static func updateMigrated(_ migrated: Bool){
+        defaults.set(migrated, forKey: Self.migratedToShrcrApiKey)
+    }
+    
+    static func getMigrated() -> Bool {
+        return defaults.bool(forKey: Self.migratedToShrcrApiKey)
     }
     
     static func getObserverStatus() -> [String: Any?] {
@@ -92,9 +123,12 @@ class ObserverStatus {
             "last_saved_date_observer_only": Self.getLastDateSavedObserverOnly(),
             "last_steps_count_saved": defaults.integer(forKey: Self.lastStepCountSentKey),
             "last_attempt_timestamp": Self.getLastAttemptDate(),
-            "created": Self.hasObserverCreated(),
+            "created": Self.hasObserverCreated(metricType: .step),
             "observer_syncing": Self.isObserverSyncing(),
             "last_saved_sleep_date_across_sources": lastDateSavedSharedSleep,
+            "workouts_observer_created": Self.hasObserverCreated(metricType: .workout),
+            "api_url": Self.getApiUrl(),
+            "migrated_to_shrcr_api": Self.getMigrated()
         ]
     }
     

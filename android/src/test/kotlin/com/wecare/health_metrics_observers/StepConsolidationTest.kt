@@ -1,15 +1,38 @@
-package com.sinapsis.health_metrics_observers
+package com.wecare.health_metrics_observers
 
 import com.google.android.gms.fitness.data.DataPoint
 import com.google.android.gms.fitness.data.DataSource
 import com.google.android.gms.fitness.data.DataType
 import com.google.android.gms.fitness.data.Device
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.text.SimpleDateFormat
 import java.time.Duration
 import java.util.*
 
 class StepConsolidationTest {
+
+    @Test fun testDateFormatWithMillis() {
+        val dateStr = "2023-07-25T13:45:03.755-0500"
+        val formatStr = HealthMetricsApiService.getDateFormatForDateStr(dateStr)
+        print(formatStr)
+        val dateFormat = SimpleDateFormat(formatStr)
+        val dateConverted = dateFormat.parse(dateStr)
+        assertTrue(formatStr == "yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ")
+        assertNotNull(dateConverted)
+    }
+
+    @Test fun testDateFormatNoMillis() {
+        val dateStr = "2023-06-27T16:00:00-0500"
+        val formatStr = HealthMetricsApiService.getDateFormatForDateStr(dateStr)
+        print(formatStr)
+        val dateFormat = SimpleDateFormat(formatStr)
+        val dateConverted = dateFormat.parse(dateStr)
+        assertTrue(formatStr == "yyyy-MM-dd'T'HH:mm:ssZZZZZ")
+        assertNotNull(dateConverted)
+    }
+
     @Test fun testSameSourcesNoConsolidated() {
         val now = Date()
         val p1 = createDataPoint(150, now, Duration.ofHours(3), "phone")

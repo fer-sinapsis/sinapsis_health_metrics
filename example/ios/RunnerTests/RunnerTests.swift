@@ -19,22 +19,68 @@ final class RunnerTests: XCTestCase {
         // Put teardown code here. This method is called after the invocation of each test method in the class.
     }
     
-    func testStatsQueryModeOnlyHead(){
-        let startDate = Calendar.current.date(byAdding: .minute, value: 30, to: Calendar.current.startOfDay(for: Date()))!
-        let mode = HealthMetricsSender().getStatsQueryModeNeededForRange(startDate: startDate, endDate: startDate.addingTimeInterval(TimeInterval(1800))) // 30 mins
-        XCTAssert(mode == .onlyHead)
+    func testCreateWorkout(){
+
+            let distance = HKQuantity(unit: HKUnit.mile(), doubleValue: 3.2)
+            let dateFormatterIso = DateFormatter()
+            dateFormatterIso.dateFormat = "yyyy-MM-dd HH:mm:ss"
+            let dateConverted = dateFormatterIso.date(from: "2023-09-07 02:00:00")
+
+            let now = Date()
+            let run = HKWorkout(activityType: HKWorkoutActivityType.running,
+                                start: dateConverted!,
+                                end: now,
+                                duration: 0,
+                                totalEnergyBurned: nil,
+                                totalDistance: distance,
+                                metadata: nil)
+
+            HKHealthStore().save(run) { (success, error) -> Void in
+                guard success else {
+                    // Perform proper error handling here.
+                    print(error?.localizedDescription)
+                    return
+                }
+
+                // Add detail samples here.
+                
+                let stepSample = self.createStepPoint(value: 130, start: now, duration: 1, sourceId: "iphonee")
+
+                // if not already created is created in hk
+                HKHealthStore().add([stepSample], to: run) { (success, error) -> Void in
+                    guard success else {
+                        // Perform proper error handling here.
+                        print(error?.localizedDescription)
+                        return
+                    }
+                    print("SUCCESSSSS")
+                }
+            }
+
     }
     
-    func testStatsQueryModeOnlyCollection(){
-        let startDate = Calendar.current.date(byAdding: .minute, value: 120, to: Calendar.current.startOfDay(for: Date()))!
-        let mode = HealthMetricsSender().getStatsQueryModeNeededForRange(startDate: startDate, endDate: startDate.addHours(3))
-        XCTAssert(mode == .onlyCollection)
+    func testDateFormatWithMillis(){
+        let dateStr = "2022-10-05T16:15:23.343Z"
+        let format = HealthMetricsApiService.getDateFormatForDateStr(dateStr)
+        
+        let dateFormatterIso = DateFormatter()
+        dateFormatterIso.dateFormat = format
+        let dateConverted = dateFormatterIso.date(from: dateStr)
+        
+        XCTAssert(format == "yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ")
+        XCTAssertNotNil(dateConverted)
     }
     
-    func testStatsQueryModeBoth(){
-        let startDate = Calendar.current.date(byAdding: .minute, value: 37, to: Calendar.current.startOfDay(for: Date()))!
-        let mode = HealthMetricsSender().getStatsQueryModeNeededForRange(startDate: startDate, endDate: startDate.addHours(4))
-        XCTAssert(mode == .headAndCollection)
+    func testDateFormatNoMillis(){
+        let dateStr = "2023-06-27T16:00:00Z"
+        let format = HealthMetricsApiService.getDateFormatForDateStr(dateStr)
+        
+        let dateFormatterIso = DateFormatter()
+        dateFormatterIso.dateFormat = format
+        let dateConverted = dateFormatterIso.date(from: dateStr)
+        
+        XCTAssert(format == "yyyy-MM-dd'T'HH:mm:ssZZZZZ")
+        XCTAssertNotNil(dateConverted)
     }
 
     func testSameSourcesNoConsolidation() throws {

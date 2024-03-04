@@ -1,6 +1,6 @@
 name: health_metrics_observers
 description: health metrics observers and utilities
-version: 0.1.6
+version: 0.2.6
 homepage:
 
 environment:
@@ -28,7 +28,7 @@ flutter:
   plugin:
     platforms:
       android:
-        package: com.sinapsis.health_metrics_observers
+        package: com.wecare.health_metrics_observers
         pluginClass: HealthMetricsObserversPlugin
       ios:
         pluginClass: HealthMetricsObserversPlugin

@@ -11,21 +11,25 @@ class HealthMetricsApiService {
     
     static func defaultRequestWithHeaders(endpointPath: String) -> URLRequest? {
         let defaults = UserDefaults.standard
-        guard let apiUrl = defaults.string(forKey: "apiUrl"),
+        guard let apiUrl = ObserverStatus.getApiUrl(),
               let userApiKey = defaults.string(forKey: "userApiKey"),
-              let xApiKey = defaults.string(forKey: "xApiKey"),
               let userId = defaults.string(forKey: "userId"),
               let appVersion = Bundle.main.object(forInfoDictionaryKey:"CFBundleShortVersionString") as? String,
               let url = URL(string: apiUrl + endpointPath) else {
                   return nil
               }
-        
+
         var request = URLRequest(url: url)
         request.addValue("application/json", forHTTPHeaderField: "Accept")
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         request.addValue(userId, forHTTPHeaderField: "we_uid")
         request.addValue(userApiKey, forHTTPHeaderField: "we_api_key")
-        request.addValue(xApiKey, forHTTPHeaderField: "x-api-key")
+        
+        //optional xapikey header
+        if let xApiKey = defaults.string(forKey: "xApiKey"), xApiKey != "" {
+            request.addValue(xApiKey, forHTTPHeaderField: "x-api-key")
+        }
+        
         request.addValue(appVersion, forHTTPHeaderField: "app_version")
         return request
     }
@@ -93,9 +97,11 @@ class HealthMetricsApiService {
                     let decoder = JSONDecoder()
                     decoder.keyDecodingStrategy = .convertFromSnakeCase
                     let stepsRecord = try? decoder.decode(StepsRecord.self, from: responseData);
+                    let endDateStr = stepsRecord?.measurementEndDate ?? ""
+                    let format = getDateFormatForDateStr(endDateStr)
                     let dateFormatterIso = DateFormatter()
-                    dateFormatterIso.dateFormat = HealthMetricsSender.defaultDateFormat
-                    let lastTimeStepsSaved = dateFormatterIso.date(from: stepsRecord?.measurementEndDate ?? "")
+                    dateFormatterIso.dateFormat = format
+                    let lastTimeStepsSaved = dateFormatterIso.date(from: endDateStr)
                     completion(lastTimeStepsSaved)
                 } else {
                     completion(nil)
@@ -103,6 +109,15 @@ class HealthMetricsApiService {
             }
         }
         task.resume()
+    }
+    
+    static func getDateFormatForDateStr(_ dateStr: String) -> String {
+        var format = HealthMetricsSender.defaultDateFormat
+        if (dateStr.contains(".") == false) {
+            // When there are no millisecs in the date
+           format = format.replacingOccurrences(of: ".SSS", with: "")
+        }
+        return format
     }
 }
 
